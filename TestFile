@@ -1,0 +1,94 @@
+	 internal class Program
+ {
+     static void Main(string[] args)
+     {
+         // In your main method or program logic:
+         var matrix = new Matrix
+         {
+             RangeValues = new double[,]
+             {
+                  { 12, 34, 56, 00, 90 },
+                  { 00, 45, 67, 89, 12 },
+                  { 34, 00, 78, 90, 23 },
+                  { 45, 67, 89, 12, 00 },
+                  { 56, 78, 00, 23, 45 }
+             },
+             NumberOfClasses = 5,
+             ClassWidth = 8000,
+             MinimumMean = -100000,
+         };
+
+         double m = 9;
+         double referenceCycleCount = 10000000;
+
+         double CycleRange = matrix.ClassWidth / 2.0;
+         double CycleMean = matrix.MinimumMean - matrix.ClassWidth / 2.0;
+         double[] CycleRanges = new double[matrix.NumberOfClasses];
+         double[] CycleMeans = new double[matrix.NumberOfClasses];
+         double[] SumOfAllCycleRanges = new double[matrix.NumberOfClasses];
+         double[] IntermediateCalculatedCycleRangeValues = new double[matrix.NumberOfClasses];
+         double[] FinalCalculatedCycleRangeValues = new double[matrix.NumberOfClasses];
+
+         for (int i = 0; i < matrix.NumberOfClasses; i++)
+         {
+             CycleRanges[i] = CycleRange;
+             CycleRange += matrix.ClassWidth / 2.0;
+
+             CycleMeans[i] = CycleMean;
+             CycleMean -= matrix.ClassWidth / 2.0;
+             for (int j = 0; j < matrix.NumberOfClasses; j++)
+             {
+                 SumOfAllCycleRanges[i] += matrix.RangeValues[i, j];
+             }
+
+             IntermediateCalculatedCycleRangeValues[i] = GetIntermediateCycleRangeValue(CycleRanges[i], m, SumOfAllCycleRanges[i], referenceCycleCount);
+         }
+
+         double FinalValue = GetFinalValue(IntermediateCalculatedCycleRangeValues, m);
+
+
+         // Write to text file
+         using (StreamWriter writer = new StreamWriter("matrix.txt"))
+         {
+             writer.WriteLine($"Equivalent Load: {FinalValue}");
+             writer.WriteLine($"Calculated for m: {m}");
+             writer.WriteLine($"Equivalent Cycle: {referenceCycleCount}");
+             writer.WriteLine();
+             // Write table headers
+             writer.WriteLine("Width\t\tMean\t\t\tN");
+             writer.WriteLine("------------------------------------------------");
+             for (int i = 0; i < matrix.NumberOfClasses; i++)
+             {
+                 for (int j = 0; j < matrix.NumberOfClasses; j++)
+                 {
+                     if (matrix.RangeValues[i, j] == 0) continue;
+
+                     writer.WriteLine($"{CycleRanges[i]}\t\t{CycleMeans[i]}\t\t{matrix.RangeValues[i, j]}");
+                 }
+             }
+         }
+     }
+
+     private static double GetFinalValue(double[] intermediateCalculatedValues, double m)
+     {
+         double sumOfIntermediateCalculatedValues = 0;
+         foreach (double sumValue in intermediateCalculatedValues)
+         {
+             sumOfIntermediateCalculatedValues += sumValue;
+         }
+         return Math.Pow(sumOfIntermediateCalculatedValues, (1 / m));
+     }
+
+     private static double GetIntermediateCycleRangeValue(double cycleRange, double m, double sumOfSpecificRange, double referenceCycleCount)
+     {
+         return Math.Pow(cycleRange, m) * sumOfSpecificRange / referenceCycleCount;
+     }
+
+     private class Matrix
+     {
+         public double[,] RangeValues { get; set; }
+         public int NumberOfClasses { get; set; }
+         public double ClassWidth { get; set; }
+         public double MinimumMean { get; set; }
+     }
+ }
